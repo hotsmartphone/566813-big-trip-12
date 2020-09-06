@@ -1,8 +1,8 @@
-import TripInfoComponent from './components/trip-info-template.js';
-import TripInfoMainComponent from './components/trip-info-main-template.js';
-import TripInfoCostComponent from './components/trip-info-cost-template.js';
-import ViewMenuComponent from './components/view-menu-template.js';
-import TripFiltersComponent from './components/trip-filters-template.js';
+import TripInfoComponent from './view/trip-info-template.js';
+import TripInfoMainComponent from './view/trip-info-main-template.js';
+import TripInfoCostComponent from './view/trip-info-cost-template.js';
+import ViewMenuComponent from './view/view-menu-template.js';
+import TripFiltersComponent from './view/trip-filters-template.js';
 
 import TripController from './controllers/trip-controller.js';
 

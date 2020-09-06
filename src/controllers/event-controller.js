@@ -1,5 +1,5 @@
-import NewEventComponent from '../components/new-event-template.js';
-import EventItemComponent from '../components/event-item-template.js';
+import NewEventComponent from '../view/new-event-template.js';
+import EventItemComponent from '../view/event-item-template.js';
 
 import {RenderPosition, render, replace} from '../utils/render.js';
 

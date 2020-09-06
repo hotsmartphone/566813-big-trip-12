@@ -1,9 +1,9 @@
-import TripSortComponent, {SortType} from '../components/trip-sort-template.js';
-// import NewEventComponent from '../components/new-event-template.js';
-import TripDayComponent from '../components/trip-day-template.js';
-import TripDaysBoardComponent from '../components/trip-days-board-template.js';
-// import EventItemComponent from '../components/event-item-template.js';
-import NoEventsComponent from '../components/no-events-template.js';
+import TripSortComponent, {SortType} from '../view/trip-sort-template.js';
+// import NewEventComponent from '../view/new-event-template.js';
+import TripDayComponent from '../view/trip-day-template.js';
+import TripDaysBoardComponent from '../view/trip-days-board-template.js';
+// import EventItemComponent from '../view/event-item-template.js';
+import NoEventsComponent from '../view/no-events-template.js';
 
 import EventController from './event-controller';
 
