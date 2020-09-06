@@ -9,7 +9,7 @@ import TripController from './presenter/trip-presenter.js';
 import {generateEvents} from './mock/point.js';
 import {RenderPosition, render} from './utils/render.js';
 
-const POINT_TRIP_COUNT = 20;
+const POINT_TRIP_COUNT = 21;
 
 const tripMain = document.querySelector(`.trip-main`);
 const tripControls = tripMain.querySelector(`.trip-controls`);
