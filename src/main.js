@@ -4,7 +4,7 @@ import TripInfoCostComponent from './view/trip-info-cost-template.js';
 import ViewMenuComponent from './view/view-menu-template.js';
 import TripFiltersComponent from './view/trip-filters-template.js';
 
-import TripController from './controllers/trip-controller.js';
+import TripController from './presenter/trip-presenter.js';
 
 import {generateEvents} from './mock/point.js';
 import {RenderPosition, render} from './utils/render.js';
