@@ -5,6 +5,8 @@ import TripDaysBoardComponent from '../view/trip-days-board-template.js';
 import EventItemComponent from '../view/event-item-template.js';
 import NoEventsComponent from '../view/no-events-template.js';
 
+import EventPresenter from './event-presenter.js';
+
 import {RenderPosition, render, replace} from '../utils/render.js';
 
 
@@ -49,66 +51,70 @@ const groupAndSortEventsByDays = (eventsArr) => { // функция  прини�
   return groupedEvents; // на выходе получаем массив объектов с ключами "День" и "События" (этого дня), сортированные по дате
 };
 
-const renderEvent = (dayEventsElement, event) => {
-  const replaceEventToEdit = () => {
-    replace(editEventComponent, eventItemComponent);
-  };
+// const renderEvent = (dayEventsElement, event) => {
+//   const replaceEventToEdit = () => {
+//     replace(editEventComponent, eventItemComponent);
+//   };
+//
+//   const replaceEditToEvent = () => {
+//     replace(eventItemComponent, editEventComponent);
+//   };
+//
+//   const onEscKeyDown = (evt) => {
+//     const isEscKey = evt.key === `Escape` || evt.key === `Esc`;
+//
+//     if (isEscKey) {
+//       replaceEditToEvent();
+//       document.removeEventListener(`keydown`, onEscKeyDown);
+//     }
+//   };
+//
+//   const eventItemComponent = new EventItemComponent(event);
+//   eventItemComponent.setEditButtonClickHandler(() => {
+//     replaceEventToEdit();
+//     document.addEventListener(`keydown`, onEscKeyDown);
+//   });
+//
+//   const editEventComponent = new NewEventComponent(event);
+//   editEventComponent.setSubmitHandler((evt) => {
+//     evt.preventDefault();
+//     replaceEditToEvent();
+//     document.removeEventListener(`keydown`, onEscKeyDown);
+//   });
+//
+//   editEventComponent.setResetHandler((evt) => {
+//     evt.preventDefault();
+//     replaceEditToEvent();
+//     document.removeEventListener(`keydown`, onEscKeyDown);
+//   });
+//
+//   render(dayEventsElement, eventItemComponent, RenderPosition.BEFOREEND);
+// };
 
-  const replaceEditToEvent = () => {
-    replace(eventItemComponent, editEventComponent);
-  };
 
-  const onEscKeyDown = (evt) => {
-    const isEscKey = evt.key === `Escape` || evt.key === `Esc`;
 
-    if (isEscKey) {
-      replaceEditToEvent();
-      document.removeEventListener(`keydown`, onEscKeyDown);
-    }
-  };
 
-  const eventItemComponent = new EventItemComponent(event);
-  eventItemComponent.setEditButtonClickHandler(() => {
-    replaceEventToEdit();
-    document.addEventListener(`keydown`, onEscKeyDown);
-  });
-
-  const editEventComponent = new NewEventComponent(event);
-  editEventComponent.setSubmitHandler((evt) => {
-    evt.preventDefault();
-    replaceEditToEvent();
-    document.removeEventListener(`keydown`, onEscKeyDown);
-  });
-
-  editEventComponent.setResetHandler((evt) => {
-    evt.preventDefault();
-    replaceEditToEvent();
-    document.removeEventListener(`keydown`, onEscKeyDown);
-  });
-
-  render(dayEventsElement, eventItemComponent, RenderPosition.BEFOREEND);
-};
-
-const renderDay = (container, day, index) => { // функция принимает на вход обект с датой и событиями этой даты, отрисовывает день и в нем отрисовывает события
-  render(container, new TripDayComponent(day, index), RenderPosition.BEFOREEND);
-  const currentDayEventsList = container.lastChild.querySelector(`.trip-events__list`);
-  day.events.forEach((event) => {
-    renderEvent(currentDayEventsList, event);
-  });
-};
-
-const renderEvents = (container, events, sortType) => { // функция принимает на вход обект с датой и событиями этой даты, отрисовывает день и в нем отрисовывает события
-  if (sortType === SortType.DEFAULT) {
-    events.forEach((day, index) => {
-      renderDay(container, day, index);
-    });
-  } else {
-    render(container, new TripDayComponent(), RenderPosition.BEFOREEND);
-    const currentDayEventsList = container.lastChild.querySelector(`.trip-events__list`);
-
-    events.forEach((event) => renderEvent(currentDayEventsList, event));
-  }
-};
+// ФУНКЦИИ ПОКА УКАЗАЛ КАК МЕТОДЫ ПРЕЗЕНТЕРА
+// const renderDay = (container, day, index) => { // функция принимает на вход обект с датой и событиями этой даты, отрисовывает день и в нем отрисовывает события
+//   render(container, new TripDayComponent(day, index), RenderPosition.BEFOREEND);
+//   const currentDayEventsList = container.lastChild.querySelector(`.trip-events__list`);
+//   day.events.forEach((event) => {
+//     renderEvent(currentDayEventsList, event);
+//   });
+// };
+//
+// const renderEvents = (container, events, sortType) => { // функция принимает на вход обект с датой и событиями этой даты, отрисовывает день и в нем отрисовывает события или отрисовывает список событий (зависит от выбранного типа сортировки)
+//   if (sortType === SortType.DEFAULT) {
+//     events.forEach((day, index) => {
+//       renderDay(container, day, index);
+//     });
+//   } else {
+//     render(container, new TripDayComponent(), RenderPosition.BEFOREEND);
+//     const currentDayEventsList = container.lastChild.querySelector(`.trip-events__list`);
+//
+//     events.forEach((event) => renderEvent(currentDayEventsList, event));
+//   }
+// };
 
 const getSortedEvents = (events, sortType) => {
   let sortedEvents = [];
@@ -140,12 +146,21 @@ class TripController {
     this._container = container;
     this._containerHeadElement = container.querySelector(`h2`);
 
+    this._events = null;
+    this._sortedEvents = null;
+
     this._noEventsComponent = new NoEventsComponent();
     this._tripSortComponent = new TripSortComponent();
     this._tripDaysBoardComponent = new TripDaysBoardComponent();
+
+    this._sortTypeChangeHandler = this._sortTypeChangeHandler.bind(this);
+
+    this._tripSortComponent.setSortTypeChangeHandler(this._sortTypeChangeHandler);
   }
 
   render(events) {
+    this._events = events;
+
     if (events.length === 0 || !events) {
       render(this._container, this._noEventsComponent, RenderPosition.BEFOREEND);
     } else {
@@ -154,15 +169,41 @@ class TripController {
 
       let sortedEvents = getSortedEvents(events, SortType.DEFAULT);
 
-      renderEvents(this._tripDaysBoardComponent.getElement(), sortedEvents, SortType.DEFAULT);
+      this._renderEvents(this._tripDaysBoardComponent.getElement(), sortedEvents, SortType.DEFAULT);
+    }
+  }
 
-      this._tripSortComponent.setSortTypeChangeHandler((sortType) => {
-        sortedEvents = getSortedEvents(events, sortType);
+  _sortTypeChangeHandler(sortType) {
+    this._sortedEvents = getSortedEvents(this._events, sortType);
 
-        this._tripDaysBoardComponent.getElement().innerHTML = ``;
+    this._tripDaysBoardComponent.getElement().innerHTML = ``;
 
-        renderEvents(this._tripDaysBoardComponent.getElement(), sortedEvents, sortType);
+    this._renderEvents(this._tripDaysBoardComponent.getElement(), this._sortedEvents, sortType);
+  }
+
+  _renderEvent(container, event) {
+    const eventPresenter = new EventPresenter(container);
+    eventPresenter.init(event);
+  }
+
+  _renderDay(container, day, index) { // функция принимает на вход обект с датой и событиями этой даты, отрисовывает день и в нем отрисовывает события
+    render(container, new TripDayComponent(day, index), RenderPosition.BEFOREEND);
+    const currentDayEventsList = container.lastChild.querySelector(`.trip-events__list`);
+    day.events.forEach((event) => {
+      this._renderEvent(currentDayEventsList, event);
+    });
+  }
+
+  _renderEvents(container, events, sortType) { // функция принимает на вход обект с датой и событиями этой даты, отрисовывает день и в нем отрисовывает события или отрисовывает список событий (зависит от выбранного типа сортировки)
+    if (sortType === SortType.DEFAULT) {
+      events.forEach((day, index) => {
+        this._renderDay(container, day, index);
       });
+    } else {
+      render(container, new TripDayComponent(), RenderPosition.BEFOREEND);
+      const currentDayEventsList = container.lastChild.querySelector(`.trip-events__list`);
+
+      events.forEach((event) => this._renderEvent(currentDayEventsList, event));
     }
   }
 }

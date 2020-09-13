@@ -4,12 +4,12 @@ import TripInfoCostComponent from './view/trip-info-cost-template.js';
 import ViewMenuComponent from './view/view-menu-template.js';
 import TripFiltersComponent from './view/trip-filters-template.js';
 
-import TripController from './presenter/trip-presenter.js';
+import TripPresenter from './presenter/trip-presenter.js';
 
 import {generateEvents} from './mock/point.js';
 import {RenderPosition, render} from './utils/render.js';
 
-const POINT_TRIP_COUNT = 21;
+const POINT_TRIP_COUNT = 20;
 
 const tripMain = document.querySelector(`.trip-main`);
 const tripControls = tripMain.querySelector(`.trip-controls`);
@@ -27,5 +27,5 @@ render(tripInfoComponent.getElement(), new TripInfoCostComponent(events), Render
 render(menuControls, new ViewMenuComponent(), RenderPosition.AFTEREND);
 render(tripControls, new TripFiltersComponent(), RenderPosition.BEFOREEND);
 
-const boardController = new TripController(tripEvents);
-boardController.render(events);
+const tripPresenter = new TripPresenter(tripEvents);
+tripPresenter.render(events);
