@@ -4,6 +4,11 @@ import {cities, typesWithOffers} from "../mock/point.js";
 import {formatDateAndTime} from "../utils/common.js";
 import {destinations} from '../mock/point.js';
 
+import flatpickr from "flatpickr";
+
+import "../../node_modules/flatpickr/dist/flatpickr.min.css";
+import "../../node_modules/flatpickr/dist/themes/material_blue.css";
+
 const createTypesMarkup = (types, currentType) => {
   return types
   .map((type) => {
@@ -184,6 +189,7 @@ class NewEvent extends SmartComponent {
     super();
 
     this._data = NewEvent.parseEventToData(event);
+    this._datepicker = null;
     this._callback = {};
     this._callback.formSubmit = null;
     this._callback.formReset = null;
@@ -193,18 +199,61 @@ class NewEvent extends SmartComponent {
     this._typeChangeHandler = this._typeChangeHandler.bind(this);
     this._destinationChangeHandler = this._destinationChangeHandler.bind(this);
     this._rollUpButtonClickHandler = this._rollUpButtonClickHandler.bind(this);
+    this._startDateChangeHandler = this._startDateChangeHandler.bind(this);
+    this._endDateChangeHandler = this._endDateChangeHandler.bind(this);
 
     this._setInnerHandlers();
+    this._setDatepicker();
   }
 
   getTemplate() {
     return createNewEventTemplate(this._data);
   }
 
+  _setDatepicker() {
+    if (this._datepicker) {
+      this._datepicker.destroy();
+      this._datepicker = null;
+    }
+
+    this._datepicker = flatpickr(
+        this.getElement().querySelector(`#event-start-time-1`),
+        {
+          enableTime: true,
+          dateFormat: `d/m/y H:i`,
+          defaultDate: this._data.dateFrom,
+          onClose: this._startDateChangeHandler
+        }
+    );
+
+    this._datepicker = flatpickr(
+        this.getElement().querySelector(`#event-end-time-1`),
+        {
+          enableTime: true,
+          dateFormat: `d/m/y H:i`,
+          defaultDate: this._data.dateTo,
+          onClose: this._endDateChangeHandler
+        }
+    );
+  }
+
+  _startDateChangeHandler([userDate]) {
+    this.updateData({
+      dateFrom: userDate
+    });
+  }
+
+  _endDateChangeHandler([userDate]) {
+    this.updateData({
+      dateTo: userDate
+    });
+  }
+
   restoreHandlers() { // не хватает хэндлера удаления
     this._setInnerHandlers();
     this.setSubmitHandler(this._callback.formSubmit);
     this.setRollUpButtonClickHandler(this._callback.formReset);
+    this._setDatepicker();
   }
 
   _setInnerHandlers() {

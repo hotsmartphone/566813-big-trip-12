@@ -3,6 +3,7 @@ import EventItemComponent from '../view/event-item-template.js';
 
 import {RenderPosition, render, replace, remove} from '../utils/render.js';
 
+
 const Mode = {
   DEFAULT: `DEFAULT`,
   EDITING: `EDITING`,
