@@ -1,15 +1,16 @@
 import {TRANSFER_EVENT_TYPES, ACTIVITY_EVENT_TYPES} from "../const.js";
-import AbstractComponent from "./abstract-component.js";
+import SmartComponent from "./smart-component.js";
 import {cities, typesWithOffers} from "../mock/point.js";
 import {formatDateAndTime} from "../utils/common.js";
+import {destinations} from '../mock/point.js';
 
 const createTypesMarkup = (types, currentType) => {
   return types
   .map((type) => {
-    const lowerCaseType = type.toLowerCase();
+    const typeUpperCaseFirstLit = type[0].toUpperCase() + type.slice(1);
     return `<div class="event__type-item">
-          <input id="event-type-${lowerCaseType}-1" class="event__type-input  visually-hidden" type="radio" name="event-type" value="${lowerCaseType}" ${currentType === type ? `checked` : ``}>
-          <label class="event__type-label  event__type-label--${lowerCaseType}" for="event-type-${lowerCaseType}-1">${type}</label>
+          <input id="event-type-${type}-1" class="event__type-input  visually-hidden" type="radio" name="event-type" value="${type}" ${currentType === type ? `checked` : ``}>
+          <label class="event__type-label  event__type-label--${type}" for="event-type-${type}-1">${typeUpperCaseFirstLit}</label>
         </div>`;
   })
   .join(`\n`);
@@ -26,7 +27,7 @@ const createDestinationNamesMarkup = (names) => {
 const createPhotosMarkup = (photos) => {
   const photosList = photos
   .map((photo) => {
-    return `<img class="event__photo" src="${photo}" alt="Event photo">`;
+    return `<img class="event__photo" src="${photo.src}" alt="${photo.description}">`;
   })
   .join(`\n`);
 
@@ -135,7 +136,7 @@ const createNewEventTemplate = (event) => {
         </div>
 
         <button class="event__save-btn  btn  btn--blue" type="submit">Save</button>
-        <button class="event__reset-btn" type="reset">Cancel</button>
+        <button class="event__reset-btn" type="reset">Delete</button>
 
         <input id="event-favorite-1" class="event__favorite-checkbox  visually-hidden" type="checkbox" name="event-favorite" ${isFavorite ? `checked` : ``}>
         <label class="event__favorite-btn" for="event-favorite-1">
@@ -178,35 +179,142 @@ const createNewEventTemplate = (event) => {
   );
 };
 
-class NewEvent extends AbstractComponent {
+class NewEvent extends SmartComponent {
   constructor(event) {
     super();
 
-    this._event = event;
+    this._data = NewEvent.parseEventToData(event);
+    this._callback = {};
+    this._callback.formSubmit = null;
+    this._callback.formReset = null;
+
+    this._formSubmitHandler = this._formSubmitHandler.bind(this);
+    this._favoriteButtonClickHandler = this._favoriteButtonClickHandler.bind(this);
+    this._typeChangeHandler = this._typeChangeHandler.bind(this);
+    this._destinationChangeHandler = this._destinationChangeHandler.bind(this);
+    this._rollUpButtonClickHandler = this._rollUpButtonClickHandler.bind(this);
+
+    this._setInnerHandlers();
   }
 
   getTemplate() {
-    return createNewEventTemplate(this._event);
+    return createNewEventTemplate(this._data);
   }
 
-  setSubmitHandler(handler) {
-    this.getElement()
-      .addEventListener(`submit`, handler);
+  restoreHandlers() { // не хватает хэндлера удаления
+    this._setInnerHandlers();
+    this.setSubmitHandler(this._callback.formSubmit);
+    this.setRollUpButtonClickHandler(this._callback.formReset);
   }
+
+  _setInnerHandlers() {
+    this.getElement()
+      .querySelector(`.event__favorite-checkbox`)
+      .addEventListener(`change`, this._favoriteButtonClickHandler);
+
+    this.getElement()
+      .querySelectorAll(`.event__type-group`)
+      .forEach((group) => group.addEventListener(`change`, this._typeChangeHandler));
+
+    this.getElement()
+      .querySelector(`.event__input--destination`)
+      .addEventListener(`change`, this._destinationChangeHandler);
+  }
+
+  _formSubmitHandler(evt) {
+    evt.preventDefault();
+    this._callback.formSubmit(NewEvent.parseDataToEvent(this._data));
+  }
+
+  setSubmitHandler(callback) {
+    this._callback.formSubmit = callback;
+    this.getElement()
+      .addEventListener(`submit`, this._formSubmitHandler);
+  }
+
 
   setResetHandler(handler) {
     this.getElement()
       .addEventListener(`reset`, handler);
   }
 
-  setRollUpButtonClickHandler(handler) {
-    this.getElement().querySelector(`.event__rollup-btn`)
-      .addEventListener(`click`, handler);
+  _rollUpButtonClickHandler(evt) {
+    this._callback.formReset(evt);
   }
 
-  setFavoriteButtonClickHandler(handler) {///////////////////////////////
-    this.getElement().querySelector(`.event__favorite-checkbox`)
-      .addEventListener(`change`, handler);
+  setRollUpButtonClickHandler(callback) {
+    this._callback.formReset = callback;
+    this.getElement().querySelector(`.event__rollup-btn`)
+      .addEventListener(`click`, this._rollUpButtonClickHandler);
+  }
+
+  // setFavoriteButtonClickHandler(handler) {
+  //   this.getElement().querySelector(`.event__favorite-checkbox`)
+  //     .addEventListener(`change`, handler);
+  // }
+
+  // setTypeChangeHandler(handler) {
+  //   this.getElement().querySelectorAll(`.event__type-group`)
+  //     .forEach((group) => group.addEventListener(`change`, handler)
+  //     );
+  // }
+  //
+  // setDestinationChangeHandler(handler) {
+  //   this.getElement().querySelector(`.event__input--destination`)
+  //     .addEventListener(`change`, handler);
+  // }
+
+  _favoriteButtonClickHandler(evt) {
+    evt.preventDefault();
+    this.updateData({
+      isFavorite: !this._data.isFavorite
+    });
+  }
+
+  _typeChangeHandler(evt) {
+    this.updateData({
+      type: evt.target.value,
+      offers: [] // При смене типа события нужно убрать доп. опции, так как пользователь их еще не отметил
+    });
+  }
+
+  _destinationChangeHandler(evt) {
+    const changedDestination = destinations.find((item) => item.name === evt.target.value);
+    if (changedDestination === undefined) {
+      return;
+    }
+    this.updateData({
+      destination: destinations.find((item) => item.name === evt.target.value)
+    });
+  }
+
+  reset(event) {
+    this.updateData(
+        NewEvent.parseEventToData(event)
+    );
+  }
+
+  static parseEventToData(event) {
+    return Object.assign(
+        {},
+        event,
+        {
+          type: event.type,
+          destination: Object.assign({}, event.destination),
+          offers: event.offers.slice(),
+          dateFrom: event.dateFrom,
+          dateTo: event.dateTo,
+          price: event.price,
+          isFavorite: event.isFavorite,
+        }
+    );
+  }
+
+  static parseDataToEvent(data) {
+    return Object.assign(
+        {},
+        data
+    );
   }
 }
 

@@ -21,11 +21,11 @@ const events = generateEvents(POINT_TRIP_COUNT);
 const tripInfoComponent = new TripInfoComponent();
 
 render(tripMain, tripInfoComponent, RenderPosition.AFTERBEGIN);
-render(tripInfoComponent.getElement(), new TripInfoMainComponent(events), RenderPosition.AFTERBEGIN);
-render(tripInfoComponent.getElement(), new TripInfoCostComponent(events), RenderPosition.BEFOREEND);
+render(tripInfoComponent, new TripInfoMainComponent(events), RenderPosition.AFTERBEGIN);
+render(tripInfoComponent, new TripInfoCostComponent(events), RenderPosition.BEFOREEND);
 
 render(menuControls, new ViewMenuComponent(), RenderPosition.AFTEREND);
 render(tripControls, new TripFiltersComponent(), RenderPosition.BEFOREEND);
 
 const tripPresenter = new TripPresenter(tripEvents);
-tripPresenter.render(events);
+tripPresenter.init(events);

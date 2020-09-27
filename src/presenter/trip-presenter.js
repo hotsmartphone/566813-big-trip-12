@@ -1,13 +1,14 @@
 import TripSortComponent, {SortType} from '../view/trip-sort-template.js';
-import NewEventComponent from '../view/new-event-template.js';
+import TripDayEventsComponent from '../view/trip-day-events-template.js';
 import TripDayComponent from '../view/trip-day-template.js';
 import TripDaysBoardComponent from '../view/trip-days-board-template.js';
-import EventItemComponent from '../view/event-item-template.js';
+// import EventItemComponent from '../view/event-item-template.js';
 import NoEventsComponent from '../view/no-events-template.js';
 
 import EventPresenter from './event-presenter.js';
 
-import {RenderPosition, render, replace} from '../utils/render.js';
+import {RenderPosition, render, remove} from '../utils/render.js';
+import {updateItem} from '../utils/common.js';
 
 
 const groupEvents = (event, container) => { // функция добавляет карточку в определенную группу - день
@@ -92,8 +93,6 @@ const groupAndSortEventsByDays = (eventsArr) => { // функция  прини�
 // };
 
 
-
-
 // ФУНКЦИИ ПОКА УКАЗАЛ КАК МЕТОДЫ ПРЕЗЕНТЕРА
 // const renderDay = (container, day, index) => { // функция принимает на вход обект с датой и событиями этой даты, отрисовывает день и в нем отрисовывает события
 //   render(container, new TripDayComponent(day, index), RenderPosition.BEFOREEND);
@@ -146,6 +145,10 @@ class TripController {
     this._container = container;
     this._containerHeadElement = container.querySelector(`h2`);
 
+    this._eventPresenters = {};
+    this._tripDayEventsComponents = [];
+    this._tripDayComponents = [];
+
     this._events = null;
     this._sortedEvents = null;
 
@@ -154,12 +157,15 @@ class TripController {
     this._tripDaysBoardComponent = new TripDaysBoardComponent();
 
     this._sortTypeChangeHandler = this._sortTypeChangeHandler.bind(this);
+    this._eventChangeHandler = this._eventChangeHandler.bind(this);
+    this._handleModeChange = this._handleModeChange.bind(this);
 
     this._tripSortComponent.setSortTypeChangeHandler(this._sortTypeChangeHandler);
   }
 
-  render(events) {
-    this._events = events;
+  init(events) {
+    this._events = events.slice();
+    this._sourcedEvents = events.slice(); // "Резервная копия" массива событий
 
     if (events.length === 0 || !events) {
       render(this._container, this._noEventsComponent, RenderPosition.BEFOREEND);
@@ -169,42 +175,84 @@ class TripController {
 
       let sortedEvents = getSortedEvents(events, SortType.DEFAULT);
 
-      this._renderEvents(this._tripDaysBoardComponent.getElement(), sortedEvents, SortType.DEFAULT);
+      this._renderEvents(sortedEvents, SortType.DEFAULT);
     }
+  }
+
+  _handleModeChange() {
+    Object
+      .values(this._eventPresenters)
+      .forEach((presenter) => presenter.resetView());
+  }
+
+  _clearEventList() {
+    Object
+    .values(this._eventPresenters)
+    .forEach((presenter) => presenter.destroy());
+    this._eventPresenters = {};
+
+    this._tripDayEventsComponents.forEach((component) => remove(component));
+    this._tripDayComponents.forEach((component) => remove(component));
   }
 
   _sortTypeChangeHandler(sortType) {
     this._sortedEvents = getSortedEvents(this._events, sortType);
-
-    this._tripDaysBoardComponent.getElement().innerHTML = ``;
-
-    this._renderEvents(this._tripDaysBoardComponent.getElement(), this._sortedEvents, sortType);
+    this._clearEventList();
+    this._renderEvents(this._sortedEvents, sortType);
   }
 
   _renderEvent(container, event) {
-    const eventPresenter = new EventPresenter(container);
+    const eventPresenter = new EventPresenter(container, this._eventChangeHandler, this._handleModeChange);
     eventPresenter.init(event);
+    this._eventPresenters[event.id] = eventPresenter;
   }
 
-  _renderDay(container, day, index) { // функция принимает на вход обект с датой и событиями этой даты, отрисовывает день и в нем отрисовывает события
-    render(container, new TripDayComponent(day, index), RenderPosition.BEFOREEND);
-    const currentDayEventsList = container.lastChild.querySelector(`.trip-events__list`);
+  _createDay(day, index) {
+    const currentDayEventsList = new TripDayEventsComponent();
+    const tripDayComponent = new TripDayComponent(day, index);
+
+    this._tripDayEventsComponents.push(currentDayEventsList);
+    this._tripDayComponents.push(tripDayComponent);
+
+    render(this._tripDaysBoardComponent, tripDayComponent, RenderPosition.BEFOREEND);
+    render(tripDayComponent, currentDayEventsList, RenderPosition.BEFOREEND);
+
+    return currentDayEventsList;
+  }
+
+  _renderDay(day, index) { // функция принимает на вход обект с датой и событиями этой даты, отрисовывает день и в нем отрисовывает события
+    // const currentDayEventsList = new TripDayEventsComponent();////////////////// ДУБЛИРВОАНИЕ КОДА №1
+    // const tripDayComponent = new TripDayComponent(day, index);
+    //
+    // render(this._tripDaysBoardComponent, tripDayComponent, RenderPosition.BEFOREEND);
+    // render(tripDayComponent, currentDayEventsList, RenderPosition.BEFOREEND);
+    const currentDayEventsList = this._createDay(day, index);
+
     day.events.forEach((event) => {
       this._renderEvent(currentDayEventsList, event);
     });
   }
 
-  _renderEvents(container, events, sortType) { // функция принимает на вход обект с датой и событиями этой даты, отрисовывает день и в нем отрисовывает события или отрисовывает список событий (зависит от выбранного типа сортировки)
+  _renderEvents(events, sortType) { // функция принимает на вход обект с датой и событиями этой даты, отрисовывает день и в нем отрисовывает события или отрисовывает список событий (зависит от выбранного типа сортировки)
     if (sortType === SortType.DEFAULT) {
       events.forEach((day, index) => {
-        this._renderDay(container, day, index);
+        this._renderDay(day, index);
       });
     } else {
-      render(container, new TripDayComponent(), RenderPosition.BEFOREEND);
-      const currentDayEventsList = container.lastChild.querySelector(`.trip-events__list`);
+      // const currentDayEventsList = new TripDayEventsComponent();////////////////// ДУБЛИРВОАНИЕ КОДА №1
+      // const tripDayComponent = new TripDayComponent();
+      //
+      // render(this._tripDaysBoardComponent, tripDayComponent, RenderPosition.BEFOREEND);
+      // render(tripDayComponent, currentDayEventsList, RenderPosition.BEFOREEND);
 
-      events.forEach((event) => this._renderEvent(currentDayEventsList, event));
+      events.forEach((event) => this._renderEvent(this._createDay(), event));
     }
+  }
+
+  _eventChangeHandler(updatedEvent) {
+    this._events = updateItem(this._events, updatedEvent);
+    this._sourcedEvents = updateItem(this._sourcedEvents, updatedEvent);
+    this._eventPresenters[updatedEvent.id].init(updatedEvent);
   }
 }
 
