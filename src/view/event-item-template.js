@@ -36,7 +36,7 @@ const createEventItemTemplate = (event) => {
   const timeFrom = formatTime(dateFrom);
   const timeTo = formatTime(dateTo);
 
-  const geteEventDuration = () => { // функция вычилсяет продолжительность (дней, часов и минут) данного события
+  const getEventDuration = () => { // функция вычилсяет продолжительность (дней, часов и минут) данного события
     const dateDiff = dateTo - dateFrom;
     const minutesFrom = dateFrom.getMinutes();
     const minutesTo = dateTo.getMinutes();
@@ -57,7 +57,7 @@ const createEventItemTemplate = (event) => {
     }
   };
 
-  const durationTime = geteEventDuration();
+  const durationTime = getEventDuration();
 
   return (
     `<li class="trip-events__item">

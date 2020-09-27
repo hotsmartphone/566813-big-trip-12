@@ -18,7 +18,6 @@ const createTripDayTemplate = (day, index) => {
       <div class="day__info">
         ${dayInfoTemplate}
       </div>
-        <ul class="trip-events__list"></ul>
       </li>`
   );
 };

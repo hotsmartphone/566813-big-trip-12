@@ -56,7 +56,7 @@ class TripSort extends AbstractComponent {
     return this._currentSortType;
   }
 
-  setSortMenuView() { // метод идет в разметку элемента и убирает Day (слева), если включена сортировка, так как карточки сортируются без разбивки по дням
+  _setSortMenuView() { // метод идет в разметку элемента и убирает Day (слева), если включена сортировка, так как карточки сортируются без разбивки по дням
     this.getElement().querySelector(`.trip-sort__item--day`).textContent = `${(this._currentSortType === SortType.DEFAULT) ? `Day` : ``}`;
   }
 
@@ -74,7 +74,7 @@ class TripSort extends AbstractComponent {
 
       this._currentSortType = sortType;
 
-      this.setSortMenuView();
+      this._setSortMenuView();
 
       handler(this._currentSortType);
     });

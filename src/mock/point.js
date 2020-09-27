@@ -27,6 +27,8 @@ const descrtiptions = [
   `In rutrum ac purus sit amet tempus.`
 ];
 
+const generateId = () => Date.now() + parseInt(Math.random() * 10000, 10); // Date.now() и Math.random() - плохие решения для генерации id, в продуктовом коде лучше испольpовать nanoid
+
 const getRandomArrayItem = (array) => {
   const randomIndex = getRandomIntegerNumber(0, array.length - 1);
 
@@ -83,13 +85,37 @@ const generateTypesWithOffers = () => { // функция создает мас�
 
 const typesWithOffers = generateTypesWithOffers();
 
+// ///////////////////////////////////////////////////////ниже
+// const generatePhotos = (count) => { // функция генерирует набор случайных фотографий (картинок)
+//   return new Array(count)
+//   .fill(``)
+//   .map(() => {
+//     return `http://picsum.photos/248/152?r=${Math.random()}`;
+//   });
+// };
+
 const generatePhotos = (count) => { // функция генерирует набор случайных фотографий (картинок)
   return new Array(count)
-  .fill(``)
+  .fill()
   .map(() => {
-    return `http://picsum.photos/248/152?r=${Math.random()}`;
+    return {
+      src: `http://picsum.photos/248/152?r=${Math.random()}`,
+      description: `Chamonix parliament building${getRandomIntegerNumber(0, 999)}` // некогда делать разное описание картинки. Случайное число, чтобы отличались
+    };
   });
 };
+
+const generateDestination = () => {
+  return cities.map((city) => {
+    return {
+      description: getRandomArray(descrtiptions, 1, 5).join(` `),
+      name: city,
+      pictures: generatePhotos(5)
+    };
+  });
+};
+
+const destinations = generateDestination();
 
 const generateEvent = () => {
   const dateFrom = new Date(Date.now() + getRandomIntegerNumber(0, ONE_DAY_TIME * MAX_TRIP_DAYS_FROM));
@@ -99,12 +125,14 @@ const generateEvent = () => {
   });
 
   return {
+    id: generateId(),
     type,
-    destination: {
-      name: getRandomArrayItem(cities),
-      description: getRandomArray(descrtiptions, 1, 5).join(` `),
-      pictures: generatePhotos(getRandomIntegerNumber(1, 5)),
-    },
+    destination: getRandomArrayItem(destinations),
+    // destination: {
+    //   name: getRandomArrayItem(cities),
+    //   description: getRandomArray(descrtiptions, 1, 5).join(` `),
+    //   pictures: generatePhotos(getRandomIntegerNumber(1, 5)),
+    // },
     offers: getRandomArray(typeWithOffers.offers, 0, typeWithOffers.offers.length),
     dateFrom,
     dateTo: new Date(dateFrom.getTime() + getRandomIntegerNumber(0, ONE_DAY_TIME * MAX_EVENT_DAYS)),
@@ -119,4 +147,4 @@ const generateEvents = (count) => {
   .map(generateEvent);
 };
 
-export {cities, typesWithOffers, generateEvents};
+export {cities, typesWithOffers, destinations, generateEvents};
